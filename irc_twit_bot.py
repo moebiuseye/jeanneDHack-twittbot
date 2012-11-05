@@ -20,7 +20,7 @@ NICK = 'Jtwitt'
 CHANNEL = '#Jeanne_D\'Hack'
 
 WHITELIST = [ "moebius_eye", "Mydym", "skelkey", "sybix", "Vigdis", "xoomed", "y0no", "Lotto", "chiropter", "grab", "Trium" ]
-RELAYBOT_NAME = ['RelayB','RelayB`','RelayB_']
+RELAYBOT_NAMES = ['RelayB','RelayB`','RelayB_']
 ##CUSTOMIZE_THIS_END
 
 def twitt ( nick, chan, to_say ) :
@@ -36,16 +36,16 @@ def twitt ( nick, chan, to_say ) :
       try:
         api.update_status(to_say)
         print('Saying, "%s"' % to_say)
-        helpers.msg(cli, chan, '%s > Twitt envoyé' % nick )
+        helpers.msg(cli, chan, '>%s > Twitt envoyé' % nick )
         return True
       except:
-        helpers.msg(cli, chan, '%s > Erreur non prévisible. Ooops.' % nick )
+        helpers.msg(cli, chan, '>%s > Erreur non prévisible. Ooops.' % nick )
       
     ## Sinon, signaler l'erreur
     elif len(to_say) > 140:
-      helpers.msg(cli, chan, '%s > Twitt trop long (%d char)' % ( nick, len(to_say) ) )
+      helpers.msg(cli, chan, '>%s > Twitt trop long (%d char)' % ( nick, len(to_say) ) )
     elif len(to_say) <= 0:
-      helpers.msg(cli, chan, '%s > Syntax: !say <message> | Interdiction d\'envoyer un twitt vide.' % nick )
+      helpers.msg(cli, chan, '>%s > Syntax: !say <message> | Interdiction d\'envoyer un twitt vide.' % nick )
 
 
 
@@ -89,7 +89,7 @@ class MyHandler(DefaultCommandHandler):
         
         ## Making sure the user is in the whitelist
         ## by (1) : checking that the user is in the list
-        if nick in WHITELIST and nick not in RELAYBOT_NAME:
+        if nick not in RELAYBOT_NAMES:
           
           match = re.match('\!([a-z]*)(.*)', msg)
           if match:
@@ -97,7 +97,7 @@ class MyHandler(DefaultCommandHandler):
             to_say = match.group(2).strip()
             print cmd, nick, to_say
             
-        elif nick == RELAYBOT_NAME:
+        else:
         
           ## or by (2) : checking that the relayed user is in the list
           match = re.match('<(.*)\@.*> \!([a-z]*)(.*)', msg)
@@ -107,11 +107,10 @@ class MyHandler(DefaultCommandHandler):
             to_say = match.group(3).strip()
             print cmd, nick, to_say
             
-        if nick not in WHITELIST:
+        if match and cmd in ["say","accept","respond"] and nick not in WHITELIST and nick not in RELAYBOT_NAMES:
           match = False
           denied_cmd = msg
-          helpers.msg(cli, chan, u"%s > Vous n\'ètes pas dans la liste blanche." % nick )
-          helpers.msg(cli, chan, u"%s > demandez à un whitelisté qu'il !accept votre message." % nick )
+          helpers.msg(cli, chan, u">%s > Vous n\'ètes pas dans la liste blanche. Une whitelisté peut !accept votre commande." % nick )
         
         ## Si la commande a été comprise
         if match:
@@ -121,16 +120,17 @@ class MyHandler(DefaultCommandHandler):
               try:
                 self.privmsg( nick_extended, chan, denied_cmd )
               except:
-                helpers.msg(cli, chan, u"%s > Rien à accepter " % nick )
+                helpers.msg(cli, chan, u">%s > Rien à accepter " % nick )
           elif cmd == "respond":
-              twitt( nick, chan, "@%s %s" % ( respond_to ,to_say) )
+              twitt( nick, chan, "@%s %s" % ( respond_to ,to_say ) )
           else:
-              helpers.msg(cli, chan, u"%s > commandes prises en charge: !say <msg> | !respond <msg> | !accept " % nick)
+              helpers.msg(cli, chan, u">%s > commandes prises en charge: !say <msg> | !respond <msg> | !accept " % nick)
         else:
           print "Parsing error"
           
-    def kick( self, kickernick, reason, mynick, myusername ):
-        if reason != "perma":
+    def kick( self, kickernick, chan, mynick, reason ):
+        print "kick: %s " % reason
+        if reason not in ["perma","permanent","perm","flood","flooding"] :
           time.sleep(2)
           helpers.join(cli, CHANNEL)
 
@@ -144,16 +144,20 @@ class MyHandler(DefaultCommandHandler):
 
     def quit( self, nick, reason ):
         try:
-          helpers.join(cli, CHANNEL)
-        except:
           try:
             ircinit()
+            print "ircinit success"
             main()
           except:
+            print "ircinit or main failure"
             try:
               main()
             except:
+              print "\"You get nothing done\" -- Axl' Rose"
               pass
+        except:
+          print "something went wrong."
+        helpers.join(cli, CHANNEL)
 
 def connect_cb(cli):
     helpers.join(cli, CHANNEL)
@@ -164,6 +168,7 @@ def main():
     global respond_to
     i = 0
     old_id = 0
+    start = time.time()
     while True:
         time.sleep(0.1)
         if i < 200:
@@ -177,24 +182,16 @@ def main():
             helpers.msg(cli, CHANNEL, 'connected')
             i+=1
         if i > 200:
-            if i > 201:
-              time.sleep(10)
+            mentions = []
+            if time.time() - start > 10 :
+              start = time.time()
+              print "getting goodies"
               try:
                 mentions = api.mentions()
                 mentions = mentions[:1] ## Get only the last mention
               except:
                 mentions = []
                 pass
-            else:
-              try:
-                mentions = api.mentions()
-                old_id = mentions[:1][0].id + 1 ## be silent at first iteration 
-                mentions = []                ## making sure we are silent. 
-              except:
-                print "Uh Oh... I will talk in 10 seconds..."
-                mentions = []
-                pass
-              i+=1
             mentions.reverse()
             for mention in mentions:
                 if mention.id > old_id :
