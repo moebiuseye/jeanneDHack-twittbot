@@ -179,7 +179,6 @@ def main():
         if i == 200:
             print 'joining'
             helpers.join(cli, CHANNEL)
-            helpers.msg(cli, CHANNEL, 'connected')
             i+=1
         if i > 200:
             mentions = []
