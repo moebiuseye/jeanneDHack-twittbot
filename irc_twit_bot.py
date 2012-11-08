@@ -7,7 +7,7 @@ import time
 import auth
 from HTMLParser import HTMLParser
 
-import logging
+## import logging
 import re
 from oyoyo.client import IRCClient
 from oyoyo.cmdhandler import DefaultCommandHandler
@@ -107,7 +107,7 @@ class MyHandler(DefaultCommandHandler):
             to_say = match.group(3).strip()
             print cmd, nick, to_say
             
-        if match and cmd in ["say","accept","respond"] and nick not in WHITELIST and nick not in RELAYBOT_NAMES:
+        if match and cmd in ["say","respond"] and nick not in WHITELIST and nick not in RELAYBOT_NAMES:
           match = False
           denied_cmd = msg
           helpers.msg(cli, chan, u">%s > Vous n\'ètes pas dans la liste blanche. Une whitelisté peut !accept votre commande." % nick )
@@ -145,8 +145,6 @@ class MyHandler(DefaultCommandHandler):
     def quit( self, nick, reason ):
         try:
           try:
-            ircinit()
-            print "ircinit success"
             main()
           except:
             print "ircinit or main failure"
@@ -216,7 +214,7 @@ def ircinit():
     global conn
     global cli
     ## Setting IRC cli.
-    logging.basicConfig(level=logging.DEBUG)
+    ## logging.basicConfig(level=logging.DEBUG)
     cli = IRCClient(MyHandler, host=HOST, port=PORT, nick=NICK)#,connect_cb=connect_cb)
     conn = cli.connect()
 
@@ -224,27 +222,24 @@ def ircinit():
 if __name__ == '__main__':
     status_queue = Queue.Queue()
 
-    ##CUSTOMIZE_THIS_START
     consumer_key    = auth.consumer_key    
     consumer_secret = auth.consumer_secret 
     key             = auth.key             
     secret          = auth.secret          
-    ##CUSTOMIZE_THIS_END
 
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(key, secret)
     api = tweepy.API(auth)
     stream = tweepy.Stream(auth=auth, listener=StreamWatcherListener(status_queue))
 
-    ##CUSTOMIZE_THIS_START
-    follow_list = ['jeanne_DHack']
-    ##CUSTOMIZE_THIS_END
+
 
 
     ## Setting IRC cli.
     ircinit()
     
     track_list = []
+    follow_list = []
     stream.filter(follow_list, track_list, True)
     try:
       main()
