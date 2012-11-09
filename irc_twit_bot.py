@@ -113,20 +113,24 @@ class MyHandler(DefaultCommandHandler):
           helpers.msg(cli, chan, u">%s > Vous n\'ètes pas dans la liste blanche. Une whitelisté peut !accept votre commande." % nick )
         
         ## Si la commande a été comprise
-        if match:
-          if cmd == "say":
-              twitt( nick, chan, to_say )
-          elif cmd == "accept":
-              try:
-                self.privmsg( nick_extended, chan, denied_cmd )
-              except:
-                helpers.msg(cli, chan, u">%s > Rien à accepter " % nick )
-          elif cmd == "respond":
-              twitt( nick, chan, "@%s %s" % ( respond_to ,to_say ) )
+        try:
+          if match:
+            if cmd == "say":
+                twitt( nick, chan, to_say )
+            elif cmd == "accept":
+                try:
+                  self.privmsg( nick_extended, chan, denied_cmd )
+                except:
+                  helpers.msg(cli, chan, u">%s > Rien à accepter " % nick )
+            elif cmd == "respond":
+                twitt( nick, chan, "@%s %s" % ( respond_to ,to_say ) )
+            else:
+                helpers.msg(cli, chan, u">%s > commandes prises en charge: !say <msg> | !respond <msg> | !accept " % nick)
           else:
-              helpers.msg(cli, chan, u">%s > commandes prises en charge: !say <msg> | !respond <msg> | !accept " % nick)
-        else:
-          print "Parsing error"
+            print "Parsing error"
+        except:
+          helpers.msg(cli, chan, u">%s > Erreur lors de l'execution de la commande." % nick )
+          
           
     def kick( self, kickernick, chan, mynick, reason ):
         print "kick: %s " % reason
@@ -168,7 +172,7 @@ def main():
     old_id = 0
     start = time.time()
     while True:
-        time.sleep(0.1)
+        time.sleep(0.5)
         if i < 200:
             i+=1
         if i == 100:
