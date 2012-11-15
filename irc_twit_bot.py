@@ -20,7 +20,6 @@ NICK = 'Jtwitt'
 CHANNEL = '#Jeanne_D\'Hack'
 
 WHITELIST = [ "moebius_eye", "Mydym", "skelkey", "sybix", "Vigdis", "xoomed", "y0no", "Lotto", "chiropter", "grab", "Trium" ]
-RELAYBOT_NAMES = ['RelayB','RelayB`','RelayB_']
 ##CUSTOMIZE_THIS_END
 
 def twitt ( nick, chan, to_say ) :
@@ -88,26 +87,13 @@ class MyHandler(DefaultCommandHandler):
         nick = re.match('(.*)\!', nick_extended).group(1).strip()
         
         ## Making sure the user is in the whitelist
-        ## by (1) : checking that the user is in the list
-        if nick not in RELAYBOT_NAMES:
-          
-          match = re.match('\!([a-z]*)(.*)', msg)
-          if match:
-            cmd = match.group(1).strip()
-            to_say = match.group(2).strip()
-            print cmd, nick, to_say
+        match = re.match('\!([a-z]*)(.*)', msg)
+        if match:
+          cmd = match.group(1).strip()
+          to_say = match.group(2).strip()
+          print cmd, nick, to_say
             
-        else:
-        
-          ## or by (2) : checking that the relayed user is in the list
-          match = re.match('<(.*)\@.*> \!([a-z]*)(.*)', msg)
-          if match:
-            cmd = match.group(1).strip()
-            nick = match.group(2).strip()
-            to_say = match.group(3).strip()
-            print cmd, nick, to_say
-            
-        if match and cmd in ["say","respond"] and nick not in WHITELIST and nick not in RELAYBOT_NAMES:
+        if match and cmd in ["say","respond"] and nick not in WHITELIST :
           match = False
           denied_cmd = msg
           helpers.msg(cli, chan, u">%s > Vous n\'ètes pas dans la liste blanche. Une whitelisté peut !accept votre commande." % nick )
@@ -184,7 +170,7 @@ def main():
             i+=1
         if i > 200:
             mentions = []
-            if time.time() - start > 10 :
+            if time.time() - start > 20 :
               start = time.time()
               print "getting goodies"
               try:
@@ -197,7 +183,8 @@ def main():
             for mention in mentions:
                 if mention.id > old_id :
                   text = HTMLParser().unescape(mention.text)
-                  helpers.msg(cli, CHANNEL, '@%s nous dis : %s' % (mention.author.screen_name , text) )
+                  helpers.msg(cli, CHANNEL, '@%s nous dis : %s' % \
+                    (mention.author.screen_name , text) )
                   respond_to = mention.author.screen_name
                   old_id = mention.id + 1
         try:
